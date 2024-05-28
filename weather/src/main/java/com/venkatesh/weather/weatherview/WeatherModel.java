@@ -3,8 +3,12 @@ package com.venkatesh.weather.weatherview;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import java.io.FileWriter;
 import java.io.IOException;
 import org.json.JSONObject;
+import java.io.FileReader;
+import java.io.File;
 
 public class WeatherModel {
     private static final String API_KEY = "9d79b5d11d4bde6d58f17b00c5ba4f16";
@@ -41,10 +45,12 @@ public class WeatherModel {
         JSONObject weather = json.getJSONArray("weather").getJSONObject(0);
         String description = weather.getString("description");
 
+        System.out.println("-------------------------------------------");
         System.out.println("Weather in " + cityName + ":");
         System.out.println("Temperature: " + temperature + "°C");
         System.out.println("Humidity: " + humidity + "%");
         System.out.println("Description: " + description);
+        System.out.println("-------------------------------------------");
     }
 
     public void getLocationWeatherData(double[] coOrdinates) throws IOException {
@@ -62,5 +68,45 @@ public class WeatherModel {
             if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
             parseAndDisplayWeatherData(response.body().string());
         }
+    }
+
+    public void getPinnedCitiesWeatherDetails() {
+        File dataFile = new File(".\\src\\main\\java\\com\\venkatesh\\weather\\weatherview\\data.txt");
+
+        try (FileReader reader = new FileReader(dataFile)) {
+            int character;
+            StringBuilder city = new StringBuilder();
+
+            while ((character = reader.read()) != -1) {
+                if(character == '\n') {
+                    getWeatherData(city.toString());
+                    city.setLength(0);
+                } else {
+                    city.append((char) character);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void fileOperation(String cityName) {
+        File dataFile = new File(".\\src\\main\\java\\com\\venkatesh\\weather\\weatherview\\data.txt");
+        if(!dataFile.exists()){
+            try {
+                dataFile.createNewFile();
+            } catch (IOException e) {
+                System.out.println("can't create file");
+            }
+        }
+
+        try (FileWriter writer = new FileWriter(dataFile, true)) {
+            writer.write(cityName + "\n");
+            System.out.println("City name saved as a data.");
+        } catch (IOException e) {
+            System.out.println("Could not save the data");
+        }
+
+        getPinnedCitiesWeatherDetails();
     }
 }
